@@ -3,11 +3,22 @@ library(data.table)
 library(XML)
 library(rvest)
 
+error_count <<- 0
+
 collect <- function(sublinks){
+
 
   newdata <- c()
   for(i in 1:length(sublinks)){
-    Sahibinden <- read_html(sublinks[i])
+    result = tryCatch({
+      Sahibinden <- read_html(sublinks[i])
+    }, warning = function(w) {
+      warning-handler-code
+    }, error = function(e) {
+      print(paste(e))
+      error_count <<- error_count + 1
+    })
+
     print(paste(sublinks[i]))
     attribute <- Sahibinden %>% html_nodes(".classifiedInfoList") %>% html_nodes("li") %>% html_nodes("strong") %>% html_text()
     attribute <- gsub("[\t\r\n\ ]", "", attribute)
@@ -21,6 +32,7 @@ collect <- function(sublinks){
       warning-handler-code
     }, error = function(e) {
       print(paste(e))
+      error_count <<- error_count + 1
     })
 
 
@@ -36,7 +48,18 @@ collect <- function(sublinks){
 
 
 url <- "https://www.sahibinden.com/satilik"
-sahibinden <- read_html(url)
+result = tryCatch({
+  sahibinden <- read_html(url)
+}, warning = function(w) {
+  warning-handler-code
+}, error = function(e) {
+  print(paste(e))
+  error_count <<- error_count + 1
+})
+
+
+
+
 
 sublinks     <- sahibinden %>% html_nodes(".classifiedTitle") %>% html_attr("href")
 emlak_tipi   <- sahibinden %>% html_nodes(".searchResultsTagAttributeValue") %>% html_text()
@@ -70,7 +93,15 @@ while(TRUE){
   newUrl   <- paste(url, nextUrl, toString(nextPage), sep = "")
   nextPage <- nextPage + length(m2)
 
-  sahibinden <- read_html(newUrl)
+  result = tryCatch({
+    sahibinden <- read_html(url)
+  }, warning = function(w) {
+    warning-handler-code
+  }, error = function(e) {
+    print(paste(e))
+    error_count <<- error_count + 1
+  })
+
   print(paste("------------------"))
   print(paste(newUrl))
 
@@ -98,6 +129,6 @@ while(TRUE){
   mydataNew     <- cbind(mydataNew, newAttributes)
   mydata        <- rbind(mydata, mydataNew)
 
-  print(paste(dim(mydata)))
+  print(paste(dim(mydata), error_count))
 
 }
